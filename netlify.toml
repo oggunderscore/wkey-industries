@@ -2,6 +2,35 @@
   command = "npm run build"
   publish = "build"
 
+[build.environment]
+  NODE_VERSION = "18"
+
+# Proxy redirects for services
+[[redirects]]
+  from = "/photos/*"
+  to = "http://47.141.162.220:2283/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/photos"
+  to = "http://47.141.162.220:2283/"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/map/*"
+  to = "http://47.141.162.220:8079/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/map"
+  to = "http://47.141.162.220:8079/"
+  status = 200
+  force = true
+
+# SPA fallback (must be last)
 [[redirects]]
   from = "/*"
   to = "/index.html"

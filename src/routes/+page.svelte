@@ -2,13 +2,29 @@
   import { onMount } from 'svelte';
   import { authStore } from '$lib/stores/authStore';
   import AuthModal from '$lib/components/AuthModal.svelte';
+  import { goto } from '$app/navigation';
 
   let showAuthModal = false;
   let mounted = false;
 
   onMount(() => {
     authStore.init();
+    
+    // Initialize user store when auth state changes
+    const unsubscribe = authStore.subscribe(state => {
+      if (state.initialized && !state.user) {
+        goto('/login');
+      } else if (state.user) {
+        // Import and initialize userStore
+        import('$lib/stores/userStore').then(({ userStore }) => {
+          userStore.init(state.user.uid);
+        });
+      }
+    });
+    
     mounted = true;
+    
+    return unsubscribe;
   });
 
   const services = [
@@ -16,21 +32,21 @@
       icon: 'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z',
       title: 'Photos',
       description: 'Photo & Video Management',
-      url: 'https://photos.wkey-industries.net',
+      url: '/photos',
       requiresAuth: false
     },
     {
       icon: 'M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z',
       title: 'Cloud',
       description: 'File Storage & Collaboration',
-      url: 'https://cloud.wkey-industries.net',
+      url: '/cloud',
       requiresAuth: true
     },
     {
       icon: 'M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7',
       title: 'Map',
       description: 'Interactive Mapping Service',
-      url: 'https://map.wkey-industries.net',
+      url: '/map',
       requiresAuth: true
     }
   ];
@@ -38,7 +54,15 @@
   function handleServiceClick(service, event) {
     if (service.requiresAuth && !$authStore.user) {
       event.preventDefault();
+      goto('/login');
+    }
+  }
+
+  function handleAuthClick() {
+    if ($authStore.user) {
       showAuthModal = true;
+    } else {
+      goto('/login');
     }
   }
 </script>
@@ -47,12 +71,12 @@
   <div class="container">
     <div class="header">
       <div class="logo-section">
-        <h1>WKEY Industries</h1>
+        <h1>wKey Industries</h1>
         <p class="subtitle">Personal Cloud Services</p>
       </div>
       
       {#if mounted}
-        <button class="auth-btn" on:click={() => showAuthModal = true}>
+        <button class="auth-btn" on:click={handleAuthClick}>
           {#if $authStore.loading}
             <span class="loading-dot"></span>
           {:else if $authStore.user}
@@ -123,7 +147,7 @@
     left: -50%;
     width: 200%;
     height: 200%;
-    background: radial-gradient(circle at 50% 50%, rgba(168, 85, 247, 0.08) 0%, transparent 50%);
+    background: radial-gradient(circle at 50% 50%, rgba(136, 85, 255, 0.08) 0%, transparent 50%);
     animation: pulse 8s ease-in-out infinite;
     pointer-events: none;
   }
@@ -146,7 +170,7 @@
     padding: 48px 40px;
     max-width: 640px;
     width: 100%;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(168, 85, 247, 0.1);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(136, 85, 255, 0.1);
     position: relative;
     z-index: 1;
     animation: slideIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
@@ -181,7 +205,7 @@
     margin-bottom: 6px;
     font-weight: 700;
     letter-spacing: -1px;
-    background: linear-gradient(135deg, var(--accent-primary), #c084fc);
+    background: linear-gradient(135deg, var(--accent-primary), #9966ff);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -266,7 +290,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, transparent 0%, rgba(168, 85, 247, 0.05) 100%);
+    background: linear-gradient(135deg, transparent 0%, rgba(136, 85, 255, 0.05) 100%);
     opacity: 0;
     transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     pointer-events: none;
@@ -275,7 +299,7 @@
   .service-card:hover:not(.locked) {
     background: var(--hover-color);
     border-color: var(--accent-primary);
-    box-shadow: 0 8px 24px rgba(168, 85, 247, 0.2);
+    box-shadow: 0 8px 24px rgba(136, 85, 255, 0.2);
     transform: translateY(-2px);
   }
   
@@ -330,8 +354,8 @@
     right: 20px;
     width: 32px;
     height: 32px;
-    background: rgba(168, 85, 247, 0.1);
-    border: 1px solid rgba(168, 85, 247, 0.3);
+    background: rgba(136, 85, 255, 0.1);
+    border: 1px solid rgba(136, 85, 255, 0.3);
     border-radius: 8px;
     display: flex;
     align-items: center;

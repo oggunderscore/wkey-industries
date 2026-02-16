@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "name": "Post-Agent Validation",
+  "description": "Runs lint checks and Puppeteer functional tests after agent execution completes to ensure code quality and functionality",
+  "version": "1",
+  "when": {
+    "type": "agentStop"
+  },
+  "then": {
+    "type": "runCommand",
+    "command": "npm run lint && npm run test:functional"
+  }
+}

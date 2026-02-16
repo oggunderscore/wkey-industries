@@ -1,18 +1,21 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 
 :root {
-  --bg-primary: #050505;
-  --bg-secondary: #0d0d0d;
-  --bg-tertiary: #151515;
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #111111;
+  --bg-tertiary: #1a1a1a;
   --text-primary: #ffffff;
-  --text-secondary: #a0a0a0;
-  --text-muted: #5a5a5a;
-  --accent-primary: #a855f7;
-  --accent-secondary: #8b3fd9;
-  --border-color: #222222;
-  --hover-color: #1a1a1a;
-  --shadow-color: rgba(0, 0, 0, 0.9);
-  --glow-color: rgba(168, 85, 247, 0.25);
+  --text-secondary: #b0b0b0;
+  --text-muted: #666666;
+  --accent-primary: #8855ff;
+  --accent-secondary: #6633cc;
+  --border-color: #2a2a2a;
+  --hover-color: #1f1f1f;
+  --disabled-color: #333333;
+  --shadow-color: rgba(0, 0, 0, 0.8);
+  --glow-color: rgba(136, 85, 255, 0.1);
+  --font-family: "Inter";
+  --font-size: 14px;
 }
 
 * {
@@ -22,13 +25,120 @@
 }
 
 body {
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background: var(--bg-primary);
+  font-family: var(--font-family), -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-size: var(--font-size);
+  background-color: var(--bg-primary);
   color: var(--text-primary);
   line-height: 1.6;
-  min-height: 100vh;
+  overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+button {
+  cursor: pointer;
+  font-family: inherit;
+  border: none;
+  background: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+  filter: grayscale(100%);
+}
+
+input,
+select,
+textarea {
+  font-family: inherit;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text-primary);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.8;
+}
+
+.btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: none;
+  font-size: var(--font-size);
+}
+
+.btn-primary {
+  background: linear-gradient(
+    135deg,
+    var(--accent-primary),
+    var(--accent-secondary)
+  );
+  color: var(--bg-primary);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+.btn-secondary {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 2px 8px var(--shadow-color);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--hover-color);
+  border-color: var(--accent-primary);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px var(--shadow-color);
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+  filter: grayscale(100%);
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  font-size: var(--font-size);
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: var(--font-size);
+  box-shadow: inset 0 2px 4px var(--shadow-color);
+}
+
+.form-input:focus {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1),
+    inset 0 2px 4px var(--shadow-color);
+  background: var(--hover-color);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -38,5 +148,6 @@ body {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

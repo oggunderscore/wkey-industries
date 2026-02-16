@@ -150,7 +150,7 @@
     padding: 40px;
     max-width: 420px;
     width: 90%;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(168, 85, 247, 0.1);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(136, 85, 255, 0.1);
     animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
@@ -205,7 +205,7 @@
 
   input:focus {
     border-color: var(--accent-primary);
-    box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.1);
+    box-shadow: 0 0 0 3px rgba(136, 85, 255, 0.1);
   }
 
   input:disabled {
@@ -233,7 +233,7 @@
   .btn-primary:hover:not(:disabled) {
     background: var(--accent-secondary);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(168, 85, 247, 0.4);
+    box-shadow: 0 4px 12px rgba(136, 85, 255, 0.4);
   }
 
   .btn-secondary {
