@@ -2,7 +2,8 @@
   import { auth, db } from '$lib/firebase';
   import { 
     signInWithEmailAndPassword, 
-    createUserWithEmailAndPassword 
+    createUserWithEmailAndPassword,
+    sendEmailVerification
   } from 'firebase/auth';
   import { doc, setDoc } from 'firebase/firestore';
   import { goto } from '$app/navigation';
@@ -13,6 +14,7 @@
   let password = '';
   let isLoading = false;
   let error = '';
+  let success = '';
   let isSignUp = false;
 
   async function handleSubmit() {
@@ -28,6 +30,7 @@
 
     isLoading = true;
     error = '';
+    success = '';
 
     try {
       if (isSignUp) {
@@ -41,15 +44,61 @@
             createdAt: new Date().toISOString()
           });
         }
+
+        // Send verification email
+        await sendEmailVerification(userCredential.user);
+        
+        success = 'Account created! Please check your email to verify your account before signing in.';
+        email = '';
+        password = '';
+        isSignUp = false;
+        isLoading = false;
+        return;
       } else {
-        await signInWithEmailAndPassword(auth, email, password);
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        
+        // Check if email is verified
+        if (!userCredential.user.emailVerified) {
+          error = 'Please verify your email before signing in. Check your inbox for the verification link.';
+          isLoading = false;
+          return;
+        }
+
+        goto('/');
       }
-      goto('/');
     } catch (err) {
-      error = err.message.replace('Firebase: ', '').replace(/\(auth.*\)/, '');
+      error = formatFirebaseError(err);
     } finally {
       isLoading = false;
     }
+  }
+
+  function formatFirebaseError(err) {
+    const code = err.code || '';
+    const message = err.message || 'An error occurred';
+
+    const errorMap = {
+      'auth/wrong-password': 'Incorrect password',
+      'auth/invalid-credential': 'Incorrect email or password',
+      'auth/user-not-found': 'No account found with this email',
+      'auth/email-already-in-use': 'An account with this email already exists',
+      'auth/invalid-email': 'Please enter a valid email address',
+      'auth/weak-password': 'Password must be at least 6 characters',
+      'auth/requires-recent-login': 'Please sign out and sign in again to perform this action',
+      'auth/too-many-requests': 'Too many attempts. Please try again later',
+      'auth/network-request-failed': 'Network error. Please check your connection',
+      'auth/operation-not-allowed': 'This operation is not allowed',
+      'auth/user-disabled': 'This account has been disabled'
+    };
+
+    // Clean up the message by removing brackets and Firebase prefixes
+    let cleanMessage = errorMap[code] || message
+      .replace('Firebase: ', '')
+      .replace(/\(auth.*?\)\.?/g, '')
+      .replace(/\[|\]/g, '')
+      .trim();
+
+    return cleanMessage || 'An error occurred';
   }
 
   function handleKeyPress(event) {
@@ -61,6 +110,7 @@
   function toggleMode() {
     isSignUp = !isSignUp;
     error = '';
+    success = '';
   }
 
   onMount(() => {
@@ -108,6 +158,10 @@
         <div class="error-message">{error}</div>
       {/if}
 
+      {#if success}
+        <div class="success-message">{success}</div>
+      {/if}
+
       <button type="submit" class="btn btn-primary login-btn" disabled={isLoading}>
         {#if isLoading}
           <LoadingSpinner type="dots" size="small" color="var(--bg-primary)" inline={true} text={isSignUp ? "Creating account..." : "Signing in..."} />
@@ -120,6 +174,8 @@
         {isSignUp ? 'Already have an account? Sign in' : 'Need an account? Sign up'}
       </button>
     </form>
+
+    <div class="creator">Created by ogg_</div>
   </div>
 </div>
 
@@ -130,9 +186,7 @@
     align-items: center;
     justify-content: center;
     padding: 40px;
-    background: radial-gradient(circle at 50% 50%, var(--bg-secondary) 0%, var(--bg-primary) 100%);
     position: relative;
-    width: 100vw;
     overflow: hidden;
   }
 
@@ -317,6 +371,25 @@
     background: rgba(239, 68, 68, 0.1);
     border: 1px solid rgba(239, 68, 68, 0.2);
     border-radius: 6px;
+  }
+
+  .success-message {
+    color: #10b981;
+    font-size: 14px;
+    text-align: center;
+    padding: 10px;
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    border-radius: 6px;
+  }
+
+  .creator {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.8em;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
   }
 
   @media (max-width: 600px) {

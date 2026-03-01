@@ -4,7 +4,12 @@
   import { 
     signInWithEmailAndPassword, 
     createUserWithEmailAndPassword,
-    signOut 
+    signOut,
+    updateEmail,
+    updatePassword,
+    reauthenticateWithCredential,
+    EmailAuthProvider,
+    sendEmailVerification
   } from 'firebase/auth';
   import { authStore } from '$lib/stores/authStore';
 
@@ -14,16 +19,36 @@
   let email = '';
   let password = '';
   let error = '';
+  let success = '';
   let loading = false;
+  
+  // Account update fields
+  let showUpdateEmail = false;
+  let showUpdatePassword = false;
+  let newEmail = '';
+  let currentPassword = '';
+  let newPassword = '';
+  let confirmPassword = '';
 
   const dispatch = createEventDispatcher();
 
   function closeModal() {
     show = false;
+    resetForm();
+    dispatch('close');
+  }
+
+  function resetForm() {
     error = '';
+    success = '';
     email = '';
     password = '';
-    dispatch('close');
+    newEmail = '';
+    currentPassword = '';
+    newPassword = '';
+    confirmPassword = '';
+    showUpdateEmail = false;
+    showUpdatePassword = false;
   }
 
   async function handleSubmit() {
@@ -32,14 +57,97 @@
 
     try {
       if (isLogin) {
-        await signInWithEmailAndPassword(auth, email, password);
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        
+        // Check if email is verified
+        if (!userCredential.user.emailVerified) {
+          error = 'Please verify your email before signing in. Check your inbox for the verification link.';
+          await signOut(auth);
+          loading = false;
+          return;
+        }
       } else {
-        await createUserWithEmailAndPassword(auth, email, password);
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        
+        // Send verification email
+        await sendEmailVerification(userCredential.user);
+        
+        // Sign out immediately after signup
+        await signOut(auth);
+        
+        success = 'Account created! Please check your email to verify your account before signing in.';
+        email = '';
+        password = '';
+        isLogin = true;
+        loading = false;
+        return;
       }
       closeModal();
     } catch (err) {
-      error = err.message.replace('Firebase: ', '').replace(/\(auth.*\)/, '');
+      error = formatFirebaseError(err);
     } finally {
+      loading = false;
+    }
+  }
+
+  async function handleUpdateEmail() {
+    if (!newEmail || !currentPassword) {
+      error = 'Please fill in all fields';
+      return;
+    }
+
+    error = '';
+    success = '';
+    loading = true;
+
+    try {
+      const user = auth.currentUser;
+      const credential = EmailAuthProvider.credential(user.email, currentPassword);
+      await reauthenticateWithCredential(user, credential);
+      await updateEmail(user, newEmail);
+      
+      success = 'Email updated successfully';
+      newEmail = '';
+      currentPassword = '';
+      showUpdateEmail = false;
+    } catch (err) {
+      error = formatFirebaseError(err);
+    } finally {
+      loading = false;
+    }
+  }
+
+  async function handleUpdatePassword() {
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      error = 'Please fill in all fields';
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      error = 'New password must be at least 6 characters';
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      error = 'New passwords do not match';
+      return;
+    }
+
+    error = '';
+    success = '';
+    loading = true;
+
+    try {
+      const user = auth.currentUser;
+      const credential = EmailAuthProvider.credential(user.email, currentPassword);
+      await reauthenticateWithCredential(user, credential);
+      await updatePassword(user, newPassword);
+      
+      // Sign out user after password change
+      await signOut(auth);
+      closeModal();
+    } catch (err) {
+      error = formatFirebaseError(err);
       loading = false;
     }
   }
@@ -49,8 +157,35 @@
       await signOut(auth);
       closeModal();
     } catch (err) {
-      error = err.message;
+      error = formatFirebaseError(err);
     }
+  }
+
+  function formatFirebaseError(err) {
+    const code = err.code || '';
+    const message = err.message || 'An error occurred';
+
+    // Map Firebase error codes to user-friendly messages
+    const errorMap = {
+      'auth/wrong-password': 'Incorrect password',
+      'auth/invalid-credential': 'Incorrect password',
+      'auth/user-not-found': 'User not found',
+      'auth/email-already-in-use': 'Email is already in use',
+      'auth/invalid-email': 'Invalid email address',
+      'auth/weak-password': 'Password is too weak',
+      'auth/requires-recent-login': 'Please sign out and sign in again to perform this action',
+      'auth/too-many-requests': 'Too many attempts. Please try again later',
+      'auth/network-request-failed': 'Network error. Please check your connection'
+    };
+
+    // Clean up the message by removing brackets and Firebase prefixes
+    let cleanMessage = errorMap[code] || message
+      .replace('Firebase: ', '')
+      .replace(/\(auth.*?\)\.?/g, '')
+      .replace(/\[|\]/g, '')
+      .trim();
+
+    return cleanMessage || 'An error occurred';
   }
 
   function toggleMode() {
@@ -58,6 +193,19 @@
     error = '';
   }
 
+  function toggleUpdateEmail() {
+    showUpdateEmail = !showUpdateEmail;
+    showUpdatePassword = false;
+    error = '';
+    success = '';
+  }
+
+  function toggleUpdatePassword() {
+    showUpdatePassword = !showUpdatePassword;
+    showUpdateEmail = false;
+    error = '';
+    success = '';
+  }
 </script>
 
 {#if show}
@@ -70,13 +218,110 @@
         <div class="auth-content">
           <h2>Account</h2>
           <p class="user-email">{$authStore.user.email}</p>
-          <button class="btn btn-secondary" on:click={handleLogout}>
-            Sign Out
-          </button>
+
+          {#if success}
+            <p class="success">{success}</p>
+          {/if}
+
+          {#if error}
+            <p class="error">{error}</p>
+          {/if}
+
+          {#if !showUpdateEmail && !showUpdatePassword}
+            <div class="account-actions">
+              <button class="btn btn-secondary" on:click={toggleUpdateEmail}>
+                Update Email
+              </button>
+              <button class="btn btn-secondary" on:click={toggleUpdatePassword}>
+                Update Password
+              </button>
+              <button class="btn btn-secondary logout-btn" on:click={handleLogout}>
+                Sign Out
+              </button>
+            </div>
+          {/if}
+
+          {#if showUpdateEmail}
+            <form on:submit|preventDefault={handleUpdateEmail} class="update-form">
+              <h3>Update Email</h3>
+              <div class="form-group">
+                <input
+                  type="email"
+                  placeholder="New email address"
+                  bind:value={newEmail}
+                  required
+                  disabled={loading}
+                />
+              </div>
+              <div class="form-group">
+                <input
+                  type="password"
+                  placeholder="Current password"
+                  bind:value={currentPassword}
+                  required
+                  disabled={loading}
+                />
+              </div>
+              <div class="button-group">
+                <button type="submit" class="btn btn-primary" disabled={loading}>
+                  {loading ? 'Updating...' : 'Update Email'}
+                </button>
+                <button type="button" class="btn btn-secondary" on:click={toggleUpdateEmail} disabled={loading}>
+                  Cancel
+                </button>
+              </div>
+            </form>
+          {/if}
+
+          {#if showUpdatePassword}
+            <form on:submit|preventDefault={handleUpdatePassword} class="update-form">
+              <h3>Update Password</h3>
+              <div class="form-group">
+                <input
+                  type="password"
+                  placeholder="Current password"
+                  bind:value={currentPassword}
+                  required
+                  disabled={loading}
+                />
+              </div>
+              <div class="form-group">
+                <input
+                  type="password"
+                  placeholder="New password (min 6 characters)"
+                  bind:value={newPassword}
+                  required
+                  disabled={loading}
+                  minlength="6"
+                />
+              </div>
+              <div class="form-group">
+                <input
+                  type="password"
+                  placeholder="Confirm new password"
+                  bind:value={confirmPassword}
+                  required
+                  disabled={loading}
+                />
+              </div>
+              <div class="button-group">
+                <button type="submit" class="btn btn-primary" disabled={loading}>
+                  {loading ? 'Updating...' : 'Update Password'}
+                </button>
+                <button type="button" class="btn btn-secondary" on:click={toggleUpdatePassword} disabled={loading}>
+                  Cancel
+                </button>
+              </div>
+            </form>
+          {/if}
         </div>
       {:else}
         <div class="auth-content">
           <h2>{isLogin ? 'Sign In' : 'Create Account'}</h2>
+          
+          {#if success}
+            <p class="success">{success}</p>
+          {/if}
           
           <form on:submit|preventDefault={handleSubmit}>
             <div class="form-group">
@@ -273,6 +518,58 @@
     color: #ef4444;
     font-size: 0.85em;
     text-align: center;
-    margin: 0;
+    margin: 0 0 16px 0;
+    padding: 10px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 6px;
+  }
+
+  .success {
+    color: #10b981;
+    font-size: 0.85em;
+    text-align: center;
+    margin: 0 0 16px 0;
+    padding: 10px;
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    border-radius: 6px;
+  }
+
+  .account-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .logout-btn {
+    margin-top: 8px;
+    border-color: rgba(239, 68, 68, 0.3);
+  }
+
+  .logout-btn:hover:not(:disabled) {
+    border-color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+  }
+
+  .update-form {
+    margin-top: 16px;
+  }
+
+  .update-form h3 {
+    color: var(--text-primary);
+    font-size: 1.1em;
+    margin-bottom: 16px;
+    font-weight: 500;
+  }
+
+  .button-group {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  .button-group .btn {
+    flex: 1;
   }
 </style>

@@ -123,6 +123,7 @@
     
     <footer>
       <p>&copy; 2026 WKEY Industries. All rights reserved.</p>
+      <p class="creator">Created by ogg_</p>
     </footer>
   </div>
 </main>
@@ -166,9 +167,9 @@
   .container {
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
-    border-radius: 20px;
-    padding: 48px 40px;
-    max-width: 640px;
+    border-radius: 16px;
+    padding: 32px 32px;
+    max-width: 580px;
     width: 100%;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(136, 85, 255, 0.1);
     position: relative;
@@ -191,8 +192,8 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 40px;
-    gap: 20px;
+    margin-bottom: 28px;
+    gap: 16px;
   }
 
   .logo-section {
@@ -201,10 +202,10 @@
   
   h1 {
     color: var(--accent-primary);
-    font-size: 2.5em;
-    margin-bottom: 6px;
+    font-size: 2em;
+    margin-bottom: 4px;
     font-weight: 700;
-    letter-spacing: -1px;
+    letter-spacing: -0.5px;
     background: linear-gradient(135deg, var(--accent-primary), #9966ff);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -213,7 +214,7 @@
   
   .subtitle {
     color: var(--text-secondary);
-    font-size: 1em;
+    font-size: 0.9em;
     font-weight: 400;
   }
 
@@ -261,7 +262,7 @@
   .services {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 12px;
   }
   
   .service-card {
@@ -278,7 +279,7 @@
   }
 
   .card-content {
-    padding: 24px 28px;
+    padding: 20px 24px;
     position: relative;
     z-index: 1;
   }
@@ -318,10 +319,10 @@
   }
 
   .service-icon {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     color: var(--accent-primary);
-    margin-bottom: 12px;
+    margin-bottom: 10px;
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
@@ -330,8 +331,8 @@
   }
   
   .service-card h2 {
-    font-size: 1.4em;
-    margin-bottom: 6px;
+    font-size: 1.25em;
+    margin-bottom: 4px;
     font-weight: 600;
     color: var(--text-primary);
     transition: color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -342,7 +343,7 @@
   }
   
   .service-card p {
-    font-size: 0.9em;
+    font-size: 0.85em;
     color: var(--text-secondary);
     font-weight: 400;
     margin: 0;
@@ -369,11 +370,17 @@
   }
   
   footer {
-    margin-top: 40px;
+    margin-top: 28px;
     color: var(--text-muted);
-    font-size: 0.85em;
+    font-size: 0.8em;
     font-weight: 400;
     text-align: center;
+  }
+
+  .creator {
+    margin-top: 4px;
+    font-size: 0.9em;
+    color: var(--text-secondary);
   }
   
   @media (max-width: 600px) {
