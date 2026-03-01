@@ -3,6 +3,7 @@
   import { authStore } from '$lib/stores/authStore';
   import AuthModal from '$lib/components/AuthModal.svelte';
   import { goto } from '$app/navigation';
+  import { dev } from '$app/environment';
 
   let showAuthModal = false;
   let mounted = false;
@@ -32,7 +33,7 @@
       icon: 'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z',
       title: 'Photos',
       description: 'Photo & Video Management',
-      url: '/photos',
+      url: dev ? 'http://47.141.162.220:2283' : 'https://photos.wkey-industries.net',
       requiresAuth: false
     },
     {
@@ -46,7 +47,7 @@
       icon: 'M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7',
       title: 'Map',
       description: 'Interactive Mapping Service',
-      url: '/map',
+      url: dev ? 'http://47.141.162.220:8079' : 'https://map.wkey-industries.net',
       requiresAuth: true
     }
   ];
@@ -56,6 +57,7 @@
       event.preventDefault();
       goto('/login');
     }
+    // External URLs will open naturally, no need to prevent default
   }
 
   function handleAuthClick() {
