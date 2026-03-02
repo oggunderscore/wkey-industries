@@ -13,17 +13,24 @@
   let email = '';
   let password = '';
   let isLoading = false;
+  let isAuthenticating = false;
   let error = '';
   let success = '';
   let isSignUp = false;
 
   async function handleSubmit() {
+    console.log('=== LOGIN SUBMIT STARTED ===');
+    console.log('Email:', email);
+    console.log('Is Sign Up:', isSignUp);
+    
     if (!email || !password) {
+      console.log('Validation failed: Missing email or password');
       error = 'Please enter both email and password';
       return;
     }
 
     if (password.length < 6) {
+      console.log('Validation failed: Password too short');
       error = 'Password must be at least 6 characters';
       return;
     }
@@ -31,46 +38,69 @@
     isLoading = true;
     error = '';
     success = '';
+    console.log('Loading state set to true');
 
     try {
       if (isSignUp) {
+        console.log('Starting sign up process...');
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        console.log('User created:', userCredential.user.uid);
         
         // Create user document in Firestore with guest role
         if (db) {
+          console.log('Creating Firestore user document...');
           await setDoc(doc(db, 'users', userCredential.user.uid), {
             email: userCredential.user.email,
             role: 'guest',
             createdAt: new Date().toISOString()
           });
+          console.log('Firestore document created');
         }
 
         // Send verification email
+        console.log('Sending verification email...');
         await sendEmailVerification(userCredential.user);
+        console.log('Verification email sent');
         
         success = 'Account created! Please check your email to verify your account before signing in.';
         email = '';
         password = '';
         isSignUp = false;
         isLoading = false;
+        console.log('Sign up complete');
         return;
       } else {
+        console.log('Starting sign in process...');
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        
-        // Check if email is verified
-        if (!userCredential.user.emailVerified) {
-          error = 'Please verify your email before signing in. Check your inbox for the verification link.';
-          isLoading = false;
-          return;
-        }
+        console.log('Sign in successful, user:', userCredential.user.uid);
+        console.log('Email verified:', userCredential.user.emailVerified);
 
+        console.log('Proceeding to authenticate');
+        // Show authenticating overlay
+        isAuthenticating = true;
+        console.log('Authenticating overlay shown');
+        
+        // Small delay to show the animation
+        console.log('Waiting 800ms for animation...');
+        await new Promise(resolve => setTimeout(resolve, 800));
+        
+        console.log('Navigating to home page...');
         goto('/');
+        console.log('Navigation initiated');
       }
     } catch (err) {
+      console.error('=== LOGIN ERROR ===');
+      console.error('Login error:', err);
+      console.error('Error code:', err.code);
+      console.error('Error message:', err.message);
+      console.error('Full error object:', JSON.stringify(err, null, 2));
+      console.error('Error stack:', err.stack);
       error = formatFirebaseError(err);
-    } finally {
       isLoading = false;
+      console.log('Error handled, loading state reset');
     }
+    
+    console.log('=== LOGIN SUBMIT ENDED ===');
   }
 
   function formatFirebaseError(err) {
@@ -122,7 +152,23 @@
 </script>
 
 <div class="login-container">
-  <div class="login-card">
+  {#if isAuthenticating}
+    <div class="auth-overlay">
+      <div class="cascading-windows">
+        <div class="window window-1"></div>
+        <div class="window window-2"></div>
+        <div class="window window-3"></div>
+      </div>
+      <div class="auth-spinner">
+        <div class="spinner-ring"></div>
+        <div class="spinner-ring"></div>
+        <div class="spinner-ring"></div>
+      </div>
+      <p class="auth-text">Authenticating...</p>
+    </div>
+  {/if}
+
+  <div class="login-card" class:blur={isAuthenticating}>
     <div class="login-header">
       <h1>wKey Industries</h1>
       <p>Stealth. Precision. Dominance.
@@ -138,6 +184,7 @@
           bind:value={email}
           class="form-input"
           placeholder="Enter your email"
+          autocomplete="email"
           disabled={isLoading}
         />
       </div>
@@ -150,6 +197,7 @@
           bind:value={password}
           class="form-input"
           placeholder="Enter your password"
+          autocomplete={isSignUp ? "new-password" : "current-password"}
           disabled={isLoading}
         />
       </div>
@@ -220,7 +268,7 @@
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
     border-radius: 16px;
-    padding: 60px 50px;
+    padding: 60px 50px 40px;
     width: 100%;
     max-width: 500px;
     box-shadow: 0 20px 40px var(--shadow-color);
@@ -392,17 +440,211 @@
     border-top: 1px solid var(--border-color);
   }
 
+  .login-card.blur {
+    filter: blur(8px);
+    pointer-events: none;
+  }
+
+  .auth-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    background: rgba(10, 10, 10, 0.8);
+    backdrop-filter: blur(10px);
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .cascading-windows {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    margin-bottom: 30px;
+  }
+
+  .window {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    border: 2px solid var(--accent-primary);
+    border-radius: 8px;
+    background: rgba(136, 85, 255, 0.1);
+    box-shadow: 0 0 20px rgba(136, 85, 255, 0.3);
+  }
+
+  .window-1 {
+    top: 20px;
+    left: 20px;
+    animation: cascade1 1.5s ease-in-out infinite;
+  }
+
+  .window-2 {
+    top: 50px;
+    left: 60px;
+    animation: cascade2 1.5s ease-in-out infinite;
+  }
+
+  .window-3 {
+    top: 80px;
+    left: 100px;
+    animation: cascade3 1.5s ease-in-out infinite;
+  }
+
+  @keyframes cascade1 {
+    0%, 100% {
+      transform: translate(0, 0) scale(1);
+      opacity: 1;
+    }
+    33% {
+      transform: translate(10px, 10px) scale(0.95);
+      opacity: 0.7;
+    }
+  }
+
+  @keyframes cascade2 {
+    0%, 100% {
+      transform: translate(0, 0) scale(1);
+      opacity: 0.8;
+    }
+    33% {
+      transform: translate(-10px, 10px) scale(1.05);
+      opacity: 1;
+    }
+    66% {
+      transform: translate(10px, -10px) scale(0.9);
+      opacity: 0.6;
+    }
+  }
+
+  @keyframes cascade3 {
+    0%, 100% {
+      transform: translate(0, 0) scale(1);
+      opacity: 0.6;
+    }
+    66% {
+      transform: translate(-10px, -10px) scale(1.1);
+      opacity: 1;
+    }
+  }
+
+  .auth-spinner {
+    position: relative;
+    width: 60px;
+    height: 60px;
+    margin-bottom: 20px;
+  }
+
+  .spinner-ring {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border: 3px solid transparent;
+    border-top-color: var(--accent-primary);
+    border-radius: 50%;
+    animation: spin 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+  }
+
+  .spinner-ring:nth-child(1) {
+    animation-delay: -0.45s;
+  }
+
+  .spinner-ring:nth-child(2) {
+    animation-delay: -0.3s;
+    border-top-color: rgba(136, 85, 255, 0.6);
+  }
+
+  .spinner-ring:nth-child(3) {
+    animation-delay: -0.15s;
+    border-top-color: rgba(136, 85, 255, 0.3);
+  }
+
+  @keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  .auth-text {
+    color: var(--text-primary);
+    font-size: 18px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+
   @media (max-width: 600px) {
     .login-container {
       padding: 20px;
     }
 
     .login-card {
-      padding: 40px 30px;
+      padding: 40px 30px 30px;
     }
 
     .login-header h1 {
       font-size: 2.5rem;
+    }
+
+    .cascading-windows {
+      width: 150px;
+      height: 150px;
+      margin-bottom: 20px;
+    }
+
+    .window {
+      width: 60px;
+      height: 60px;
+    }
+
+    .window-1 {
+      top: 15px;
+      left: 15px;
+    }
+
+    .window-2 {
+      top: 40px;
+      left: 45px;
+    }
+
+    .window-3 {
+      top: 65px;
+      left: 75px;
+    }
+
+    .auth-spinner {
+      width: 50px;
+      height: 50px;
+    }
+
+    .auth-text {
+      font-size: 16px;
     }
   }
 </style>

@@ -1,5 +1,6 @@
 <script>
   import { createEventDispatcher } from 'svelte';
+  import { browser } from '$app/environment';
   import { auth } from '$lib/firebase';
   import { 
     signInWithEmailAndPassword, 
@@ -154,9 +155,21 @@
 
   async function handleLogout() {
     try {
+      console.log('Starting logout process...');
+      
+      // Cleanup userStore before signing out
+      if (browser) {
+        const { userStore } = await import('$lib/stores/userStore');
+        userStore.cleanup();
+      }
+      
       await signOut(auth);
+      console.log('Logout successful');
       closeModal();
     } catch (err) {
+      console.error('Logout error:', err);
+      console.error('Error code:', err.code);
+      console.error('Error message:', err.message);
       error = formatFirebaseError(err);
     }
   }

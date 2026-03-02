@@ -13,10 +13,10 @@
     constructor(canvasWidth, canvasHeight) {
       this.x = Math.random() * canvasWidth;
       this.y = Math.random() * canvasHeight;
-      this.size = Math.random() * 2 + 0.5;
+      this.size = Math.random() * 3 + 1.5;
       this.speedX = Math.random() * 0.5 - 0.25;
       this.speedY = Math.random() * 0.5 - 0.25;
-      this.opacity = Math.random() * 0.5 + 0.2;
+      this.opacity = Math.random() * 0.5 + 0.5;
       this.waveOffset = Math.random() * Math.PI * 2;
       this.waveSpeed = Math.random() * 0.02 + 0.01;
       this.waveAmplitude = Math.random() * 30 + 20;
@@ -26,14 +26,11 @@
       this.x += this.speedX;
       this.y += this.speedY + Math.sin(time * this.waveSpeed + this.waveOffset) * 0.5;
 
-      // Keep particles within bounds
-      if (this.x < 0) this.x = 0;
-      if (this.x > canvasWidth) this.x = canvasWidth;
-      if (this.y < 0) this.y = 0;
-      if (this.y > canvasHeight) this.y = canvasHeight;
-
-      if (this.x <= 0 || this.x >= canvasWidth) this.speedX *= -1;
-      if (this.y <= 0 || this.y >= canvasHeight) this.speedY *= -1;
+      // Wrap particles around edges
+      if (this.x < 0) this.x = canvasWidth;
+      if (this.x > canvasWidth) this.x = 0;
+      if (this.y < 0) this.y = canvasHeight;
+      if (this.y > canvasHeight) this.y = 0;
     }
 
     draw(ctx) {
@@ -115,8 +112,8 @@
           const distance = Math.sqrt(dx * dx + dy * dy);
 
           if (distance < 120) {
-            ctx.strokeStyle = `rgba(136, 85, 255, ${0.15 * (1 - distance / 120)})`;
-            ctx.lineWidth = 0.5;
+            ctx.strokeStyle = `rgba(136, 85, 255, ${0.7 * (1 - distance / 120)})`;
+            ctx.lineWidth = 1.5;
             ctx.beginPath();
             ctx.moveTo(particle.x, particle.y);
             ctx.lineTo(particles[j].x, particles[j].y);

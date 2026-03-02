@@ -2,8 +2,10 @@
   import { onMount } from 'svelte';
   import { authStore } from '$lib/stores/authStore';
   import AuthModal from '$lib/components/AuthModal.svelte';
+  import ServiceStatus from '$lib/components/ServiceStatus.svelte';
   import { goto } from '$app/navigation';
   import { dev } from '$app/environment';
+  import { browser } from '$app/environment';
 
   let showAuthModal = false;
   let mounted = false;
@@ -34,21 +36,24 @@
       title: 'Photos',
       description: 'Photo & Video Management',
       url: dev ? 'http://47.141.162.220:2283' : 'https://photos.wkey-industries.net',
-      requiresAuth: false
+      requiresAuth: false,
+      showStatus: true
     },
     {
       icon: 'M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z',
       title: 'Cloud',
       description: 'File Storage & Collaboration',
       url: '/cloud',
-      requiresAuth: true
+      requiresAuth: true,
+      showStatus: false
     },
     {
       icon: 'M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7',
       title: 'Map',
       description: 'Interactive Mapping Service',
       url: dev ? 'http://47.141.162.220:8079' : 'https://map.wkey-industries.net',
-      requiresAuth: true
+      requiresAuth: true,
+      showStatus: true
     }
   ];
 
@@ -97,17 +102,23 @@
     </div>
     
     <div class="services">
-      {#each services as service}
+      {#each services as service, index}
         <a 
           href={service.url} 
           class="service-card"
           class:locked={service.requiresAuth && !$authStore.user}
+          style="animation-delay: {index * 0.1}s"
           on:click={(e) => handleServiceClick(service, e)}
         >
           <div class="card-content">
-            <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d={service.icon}/>
-            </svg>
+            <div class="card-header">
+              <svg class="service-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d={service.icon}/>
+              </svg>
+              {#if browser && service.showStatus}
+                <ServiceStatus url={service.url} />
+              {/if}
+            </div>
             <h2>{service.title}</h2>
             <p>{service.description}</p>
             {#if service.requiresAuth && !$authStore.user}
@@ -141,6 +152,7 @@
     padding: 20px;
     position: relative;
     overflow: hidden;
+    padding-bottom: 20px;
   }
 
   main::before {
@@ -170,8 +182,8 @@
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
     border-radius: 16px;
-    padding: 32px 32px;
-    max-width: 580px;
+    padding: 24px;
+    max-width: 520px;
     width: 100%;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(136, 85, 255, 0.1);
     position: relative;
@@ -194,8 +206,8 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 28px;
-    gap: 16px;
+    margin-bottom: 20px;
+    gap: 12px;
   }
 
   .logo-section {
@@ -204,8 +216,8 @@
   
   h1 {
     color: var(--accent-primary);
-    font-size: 2em;
-    margin-bottom: 4px;
+    font-size: 1.75em;
+    margin-bottom: 2px;
     font-weight: 700;
     letter-spacing: -0.5px;
     background: linear-gradient(135deg, var(--accent-primary), #9966ff);
@@ -216,20 +228,20 @@
   
   .subtitle {
     color: var(--text-secondary);
-    font-size: 0.9em;
+    font-size: 0.85em;
     font-weight: 400;
   }
 
   .auth-btn {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     background: var(--bg-tertiary);
     border: 1px solid var(--border-color);
     color: var(--text-primary);
-    padding: 10px 18px;
+    padding: 8px 14px;
     border-radius: 8px;
-    font-size: 0.9em;
+    font-size: 0.85em;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -244,8 +256,8 @@
   }
 
   .auth-btn .icon {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
   }
 
   .loading-dot {
@@ -264,7 +276,7 @@
   .services {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
   }
   
   .service-card {
@@ -278,10 +290,24 @@
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: slideInCard 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  @keyframes slideInCard {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   .card-content {
-    padding: 20px 24px;
+    padding: 16px 20px;
     position: relative;
     z-index: 1;
   }
@@ -320,11 +346,17 @@
     border-color: var(--border-color);
   }
 
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
   .service-icon {
-    width: 28px;
-    height: 28px;
+    width: 24px;
+    height: 24px;
     color: var(--accent-primary);
-    margin-bottom: 10px;
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
@@ -333,8 +365,8 @@
   }
   
   .service-card h2 {
-    font-size: 1.25em;
-    margin-bottom: 4px;
+    font-size: 1.15em;
+    margin-bottom: 2px;
     font-weight: 600;
     color: var(--text-primary);
     transition: color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -345,7 +377,7 @@
   }
   
   .service-card p {
-    font-size: 0.85em;
+    font-size: 0.8em;
     color: var(--text-secondary);
     font-weight: 400;
     margin: 0;
@@ -353,10 +385,10 @@
 
   .lock-badge {
     position: absolute;
-    top: 20px;
-    right: 20px;
-    width: 32px;
-    height: 32px;
+    top: 16px;
+    right: 16px;
+    width: 28px;
+    height: 28px;
     background: rgba(136, 85, 255, 0.1);
     border: 1px solid rgba(136, 85, 255, 0.3);
     border-radius: 8px;
@@ -366,58 +398,112 @@
   }
 
   .lock-icon {
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     color: var(--accent-primary);
   }
   
   footer {
-    margin-top: 28px;
+    margin-top: 20px;
+    margin-bottom: 0;
     color: var(--text-muted);
-    font-size: 0.8em;
+    font-size: 0.75em;
     font-weight: 400;
     text-align: center;
   }
 
   .creator {
-    margin-top: 4px;
+    margin-top: 2px;
+    margin-bottom: 0;
     font-size: 0.9em;
     color: var(--text-secondary);
   }
   
   @media (max-width: 600px) {
+    main {
+      padding: 16px;
+    }
+
     .container {
-      padding: 32px 24px;
+      padding: 20px 18px;
+      border-radius: 12px;
     }
 
     .header {
       flex-direction: column;
       align-items: stretch;
+      margin-bottom: 16px;
+      gap: 10px;
     }
 
     .auth-btn {
       justify-content: center;
+      padding: 10px 14px;
     }
     
     h1 {
-      font-size: 2em;
+      font-size: 1.5em;
     }
 
     .subtitle {
-      font-size: 0.95em;
+      font-size: 0.8em;
     }
     
+    .services {
+      gap: 8px;
+    }
+
     .card-content {
-      padding: 20px 24px;
+      padding: 14px 16px;
+    }
+
+    .card-header {
+      gap: 6px;
+      margin-bottom: 6px;
     }
 
     .service-icon {
-      width: 28px;
-      height: 28px;
+      width: 22px;
+      height: 22px;
     }
 
     .service-card h2 {
-      font-size: 1.25em;
+      font-size: 1.05em;
+    }
+
+    .service-card p {
+      font-size: 0.75em;
+    }
+
+    .lock-badge {
+      top: 14px;
+      right: 14px;
+      width: 24px;
+      height: 24px;
+    }
+
+    .lock-icon {
+      width: 12px;
+      height: 12px;
+    }
+
+    footer {
+      margin-top: 16px;
+      font-size: 0.7em;
+    }
+  }
+
+  @media (max-width: 390px) {
+    .container {
+      padding: 18px 16px;
+    }
+
+    h1 {
+      font-size: 1.4em;
+    }
+
+    .card-content {
+      padding: 12px 14px;
     }
   }
 </style>
