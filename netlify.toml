@@ -5,6 +5,13 @@
 [build.environment]
   NODE_VERSION = "18"
 
+# Proxy for Photos service
+[[redirects]]
+  from = "/photos/*"
+  to = "http://47.141.162.220:2283/:splat"
+  status = 200
+  force = true
+
 # SPA fallback
 [[redirects]]
   from = "/*"
