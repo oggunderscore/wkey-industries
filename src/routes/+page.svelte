@@ -35,7 +35,8 @@
       icon: 'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z',
       title: 'Photos',
       description: 'Photo & Video Management',
-      url: dev ? 'http://47.141.162.220:2283' : '/photos',
+      url: dev ? 'http://47.141.162.220:2283' : 'https://photos.wkey-industries.net',
+  healthUrl: 'https://photos.wkey-industries.net/api/server/ping',
       requiresAuth: false,
       showStatus: true
     },
@@ -43,9 +44,10 @@
       icon: 'M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z',
       title: 'Cloud',
       description: 'File Storage & Collaboration',
-      url: '/cloud',
+      url: dev ? 'http://47.141.162.220:8080' : 'https://cloud.wkey-industries.net',
+  healthUrl: 'https://cloud.wkey-industries.net/status.php',
       requiresAuth: true,
-      showStatus: false
+      showStatus: true
     },
     {
       icon: 'M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7',
@@ -116,7 +118,7 @@
                 <path d={service.icon}/>
               </svg>
               {#if browser && service.showStatus}
-                <ServiceStatus url={service.url} />
+                <ServiceStatus url={service.url} healthUrl={service.healthUrl} />
               {/if}
             </div>
             <h2>{service.title}</h2>

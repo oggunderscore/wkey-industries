@@ -5,11 +5,11 @@
 [build.environment]
   NODE_VERSION = "18"
 
-# Proxy for Photos service
+# Redirect root to photos subdomain
 [[redirects]]
-  from = "/photos/*"
-  to = "http://47.141.162.220:2283/:splat"
-  status = 200
+  from = "/"
+  to = "https://photos.wkey-industries.net/"
+  status = 301
   force = true
 
 # SPA fallback
