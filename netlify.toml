@@ -5,14 +5,7 @@
 [build.environment]
   NODE_VERSION = "18"
 
-# Redirect root to photos subdomain
-[[redirects]]
-  from = "/"
-  to = "https://photos.wkey-industries.net/"
-  status = 301
-  force = true
-
-# SPA fallback
+# SPA fallback — all routes serve index.html
 [[redirects]]
   from = "/*"
   to = "/index.html"
